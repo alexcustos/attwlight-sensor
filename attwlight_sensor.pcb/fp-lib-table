@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name attwlight_sensor)(type KiCad)(uri "$(KIPRJMOD)/attwlight_sensor.pretty")(options "")(descr ""))
+)

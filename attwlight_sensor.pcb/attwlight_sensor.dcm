@@ -1,0 +1,16 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP PROGRAMMER
+D Connector 01x07
+$ENDCMP
+#
+$CMP Switch_SPDT
+D Double Single Pole Double Throw (SPDT) switch
+$ENDCMP
+#
+$CMP TMP36
+D Temperature sensor
+K TMP
+$ENDCMP
+#
+#End Doc Library
