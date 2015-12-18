@@ -131,7 +131,7 @@ void sleep()
 {
   GIMSK = _BV(PCIE); // Включить Pin Change прерывания
   if (SLEEP_PERIOD == WDTO_INFINITE || payload.light != LIGHT_FUZZY)
-    PCMSK |= _BV(LIGHT_PIN); // PCINT3; включить если нет проблем с освещением и есть шанс проснуться
+    PCMSK |= _BV(LIGHT_PIN); // PCINT3; включить если нет проблем с освещением или иначе нет шансов проснуться
   ADCSRA &= ~_BV(ADEN); // отключить ADC; уменьшает энергопотребление
 
   if (SLEEP_PERIOD != WDTO_INFINITE) {
