@@ -30,18 +30,8 @@ const unsigned int fuzzy_stop = 1023 - fuzzy_start;
 
 RF24 radio(CE_PIN, CSN_PIN);
 RF24Network network(radio);
-RF24NetworkHeader header(rx_node);
+RF24NetworkHeader header(rx_node, 'L');
 
-struct payload_t
-{
-  unsigned int id;
-  unsigned long uptime;
-  byte light;
-  long vcc;
-  float tmp36;
-  //char stat[STAT_LEN];
-  byte stat;
-};
 payload_t payload;
 bool is_payload_sent = false;
 
@@ -131,7 +121,7 @@ void sleep()
 {
   GIMSK = _BV(PCIE); // Включить Pin Change прерывания
   if (SLEEP_PERIOD == WDTO_INFINITE || payload.light != LIGHT_FUZZY)
-    PCMSK |= _BV(LIGHT_PIN); // PCINT3; включить если нет проблем с освещением или иначе нет шансов проснуться
+    PCMSK |= _BV(LIGHT_PIN); // PCINT3; включить если нет проблем с освещением и есть шанс проснуться
   ADCSRA &= ~_BV(ADEN); // отключить ADC; уменьшает энергопотребление
 
   if (SLEEP_PERIOD != WDTO_INFINITE) {
@@ -156,7 +146,7 @@ void sleep()
   sei(); // включить прерывания; иначе таймеры не будут работать
 }
 
-long readVcc() {
+int32_t readVcc() {
   // Установка референса в Vcc и измерение внутреннего Vbg == 1.1V
   ADMUX = _BV(MUX3) | _BV(MUX2);
   delay(2); // требуется минимум 1ms для стабилизации
@@ -164,22 +154,21 @@ long readVcc() {
   while (bit_is_set(ADCSRA, ADSC)); // ADSC == 1 пока опрос активен
 
   // Чтение ADCL блокирует ADCH, чтение ADCH разблокирует оба регистра => ADCL читать первым
-  uint8_t low  = ADCL; // младший регистр данных ADC
+  uint8_t low = ADCL; // младший регистр данных ADC
   uint8_t high = ADCH; // старший регистр данных ADC
 
-  long result = (high << 8) | low;
+  int32_t result = (high << 8) | low;
 
   result = 1125300L / result; // 1125300 = 1.1*1023*1000
   return result; // Vcc в милливольтах
 }
 
-float readTmp36(long vcc)
+int32_t readTmp36(int32_t vcc)
 {
   int input = analogRead(TMP36_PIN); // напряжение относительно refVolts
-  float refVolts = float(vcc) / 1000.0;
-  float voltage = float(input) * refVolts / 1024.0; // фактическое напряжение
-  float temperatureC = (voltage - 0.5) * 100.0; // смещение 500mV & 10mV == 1°C
-  return temperatureC;
+  int32_t voltage = (input * vcc) / 1024; // фактическое напряжение
+  // в миллиградусах Цельсия
+  return (voltage - 500) * 100; // смещение 500mV & 10mV == 1°C
 }
 
 light_t readLightStatus(unsigned int ms)
